@@ -10,8 +10,8 @@ public class Course {
     }
 
     // прохождение полосы препятствий
-    public void doIt(Competitor[] competitor){
-        for (Competitor c : competitor) {
+    public void doIt(Team team){
+        for (Competitor c : team.getTeamArray()) {
             for (Obstacle o : course) {
                 o.doIt(c);
                 if (!c.isOnDistance()) break;

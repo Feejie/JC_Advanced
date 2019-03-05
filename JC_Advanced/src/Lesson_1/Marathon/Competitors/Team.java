@@ -6,6 +6,11 @@ public class Team {
     String teamName;
     Competitor[] competitors;
 
+    // вывод массива участников команды
+    public Competitor[] getTeamArray(){
+        return competitors;
+    }
+
     public Team(String teamName, Competitor... competitors){
         this.teamName = teamName;
         this.competitors = competitors;
@@ -25,15 +30,12 @@ public class Team {
         System.out.println(teamName);
     }
 
-    // вывод массива участников команды
-    public Competitor[] getTeamArray(){
-        return this.competitors;
-    }
-
     // результат прохождения всей полосы препятствий
     public void showResults(){
         for (Competitor c : competitors) {
-            c.info();
+            if(o.isOnDistance()) {
+                c.info();
+            }
         }
     }
 
