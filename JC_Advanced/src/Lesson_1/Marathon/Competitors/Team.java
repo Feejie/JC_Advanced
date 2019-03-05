@@ -33,7 +33,7 @@ public class Team {
     // результат прохождения всей полосы препятствий
     public void showResults(){
         for (Competitor c : competitors) {
-            if(o.isOnDistance()) {
+            if(c.isOnDistance()) {
                 c.info();
             }
         }
