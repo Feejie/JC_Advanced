@@ -12,7 +12,8 @@
     -fx-background-repeat: repeat;
 }
 
-#textArea {
+#vBoxArea {
+    -fx-background-color: white;
     -fx-opacity: 0.92;
 }
 

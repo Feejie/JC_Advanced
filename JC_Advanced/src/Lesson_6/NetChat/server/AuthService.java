@@ -29,6 +29,21 @@ public class AuthService {
         return null;
     }
 
+    public static boolean checkBlackList(String nick) throws SQLException {
+
+
+
+        return false;
+    }
+
+    public static void addToBlackList(){
+
+    }
+
+    public static void deleteFromBlackList(){
+
+    }
+
 
     public static void disconnect() {
         try {
