@@ -5,6 +5,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ClientHandler {
 
@@ -12,10 +14,14 @@ public class ClientHandler {
     private Socket socket;
     private DataOutputStream out;
     private DataInputStream in;
+    private List<String> blacklist;
     private String nick;
+
+    private boolean myMsg;
 
     public ClientHandler(MainServer server, Socket socket) {
         try {
+            this.blacklist = new ArrayList<>();
             this.server = server;
             this.socket = socket;
             this.in = new DataInputStream(socket.getInputStream());
@@ -25,14 +31,14 @@ public class ClientHandler {
                 @Override
                 public void run() {
                     try {
+                        myMsg = false;
                         while (true) {
                             String str = in.readUTF();
-
                             if(str.startsWith("/auth")) {
                                 String[] tokens = str.split(" ");
                                 String newNick = AuthService.getNickByLoginAndPass(tokens[1], tokens[2]);
                                 if(newNick != null) {
-                                    if (!newNick.equalsIgnoreCase(server.checkNick())){
+                                    if (!server.checkNick(newNick)){
                                         sendMsg("/authok");
                                         nick = newNick;
                                         server.subscribe(ClientHandler.this);
@@ -49,28 +55,37 @@ public class ClientHandler {
 
                         while (true) {
                             String str = in.readUTF();
-                            if (str.equals("/end")) {
-                                out.writeUTF("/serverclosed");
-                                break;
-                            }
-                            /**
-                             * Отправка личного сообщения
-                             */
-                            if (str.startsWith("/w")){
-                                String[] tokens = str.split(" ");
-                                String nickname = tokens[1];
-                                str = tokens[2];
-                                server.privateMsg(nickname, "[ЛС от] " + nick + " : " + str);
-                                if (server.checkNick().equalsIgnoreCase(nickname)){
-                                    sendMsg("[ЛС для] " + nickname + " : " + str);
-                                } else {
-                                    sendMsg("Такого пользователя нет");
+                            if (str.startsWith("/")) {
+                                if (str.equals("/end")) {
+                                    out.writeUTF("/serverclosed");
+                                    break;
+                                }
+                                if (str.startsWith("/w ")) {
+                                    String[] tokens = str.split(" ", 3);
+                                    server.privateMsg(ClientHandler.this, tokens[1], tokens[2]);
+                                }
+                                if (str.startsWith("/blacklist ")) {
+                                    String[] tokens = str.split(" ");
+                                    blacklist.add(tokens[1]);
+                                    sendMsg("Пользователь " + tokens[1] + " добавлен в черный список");
                                 }
 
-                            } else {
-                                server.broadcastMsg(nick + " : " + str);
-                            }
+                                // Исключение из blacklist
 
+                                if (str.startsWith("/reblacklist ")) {
+                                    String[] tokens = str.split(" ");
+                                    blacklist.remove(tokens[1]);
+                                    sendMsg("Пользователь " + tokens[1] + " удален из черного списка");
+                                }
+                            } else {
+                                server.broadcastMsg(ClientHandler.this, str);
+
+                                /**
+                                 * Реализация ориентации собщений
+                                 */
+
+                                out.writeUTF("/mymsg");
+                            }
                         }
 
                     } catch (IOException e) {
@@ -103,16 +118,25 @@ public class ClientHandler {
         }
     }
 
+    public boolean checkBlackList(String nick) {
+        return blacklist.contains(nick);
+    }
+
     public String getNick(){
         return this.nick;
     }
 
     public void sendMsg(String msg) {
         try {
+            myMsg = true;
             out.writeUTF(msg);
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public boolean isMyMsg() {
+        return myMsg;
     }
 
 }

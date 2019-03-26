@@ -44,35 +44,68 @@ public class MainServer {
 
     public void subscribe(ClientHandler client) {
         clients.add(client);
+        broadcastClientList();
     }
 
     public void unsubscribe(ClientHandler client) {
         clients.remove(client);
+        broadcastClientList();
     }
 
-    public void broadcastMsg(String msg) {
+    public void broadcastMsg(ClientHandler from, String msg) {
         for (ClientHandler o : clients) {
-            o.sendMsg(msg);
-        }
-    }
-
-    public void privateMsg(String target, String msg) {
-        for (ClientHandler o : clients) {
-            if (o.getNick().equalsIgnoreCase(target)){
-                o.sendMsg(msg);
-                break;
-            } else {
-                System.out.println("Такого пользователя нет");
+            if (!o.checkBlackList(from.getNick())){
+                if (o.getNick().equals(from.getNick())) {
+                    o.sendMsg(msg);
+                } else {
+                    o.sendMsg(from.getNick() + " : " + msg);
+                }
             }
         }
     }
 
-    public String checkNick() {
-        String nick = "";
+    public void privateMsg(ClientHandler from, String nickTo, String msg) {
         for (ClientHandler o : clients) {
-            nick = o.getNick();
+            if (o.getNick().equals(nickTo)){
+
+                // Проверка черного списка при отправке ЛС
+
+                if (!o.checkBlackList(from.getNick())){
+                    o.sendMsg("from " + from.getNick() + ": " + msg);
+                    from.sendMsg("to " + nickTo + ": " + msg);
+                    return;
+                } else {
+
+                    // Оповещение пользователя о том, что он в ЧС
+
+                    from.sendMsg("Вы в находитесь в черном списке пользователя " + nickTo);
+                    return;
+                }
+            }
         }
-        return nick;
+        from.sendMsg("Пользователь с ником " + nickTo + " не найден в чате!");
+    }
+
+    public boolean checkNick(String nick) {
+        for (ClientHandler o : clients) {
+            if (o.getNick().equals(nick)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void broadcastClientList() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("/clientlist ");
+        for (ClientHandler o: clients) {
+            sb.append(o.getNick() + " ");
+        }
+        String out = sb.toString();
+
+        for (ClientHandler o: clients) {
+            o.sendMsg(out);
+        }
     }
 
 }

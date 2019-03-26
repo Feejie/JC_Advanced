@@ -1,12 +1,12 @@
 package Lesson_6.NetChat.client;
 
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Button;
-import javafx.scene.control.PasswordField;
-import javafx.scene.control.TextArea;
-import javafx.scene.control.TextField;
+import javafx.geometry.Pos;
+import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 
 import java.awt.event.ActionEvent;
 import java.io.DataInputStream;
@@ -19,8 +19,11 @@ import java.util.ResourceBundle;
 
 public class Controller {
 
+//    @FXML
+//    TextArea textArea;
+
     @FXML
-    TextArea textArea;
+    VBox vBoxArea;
 
     @FXML
     TextField textField;
@@ -40,6 +43,9 @@ public class Controller {
     @FXML
     PasswordField passwordField;
 
+    @FXML
+    ListView<String> clientList;
+
     private boolean isAuthorized;
 
     Socket socket;
@@ -49,6 +55,8 @@ public class Controller {
     final String IP_ADRESS = "localhost";
     final int PORT = 7175;
 
+    boolean myMsg;
+
     public void setAuthorized(boolean isAuthorized) {
         this.isAuthorized = isAuthorized;
         if(!isAuthorized) {
@@ -56,11 +64,15 @@ public class Controller {
             upperPanel.setManaged(true);
             bottomPanel.setVisible(false);
             bottomPanel.setManaged(false);
+            clientList.setVisible(false);
+            clientList.setManaged(false);
         } else {
             upperPanel.setVisible(false);
             upperPanel.setManaged(false);
             bottomPanel.setVisible(true);
             bottomPanel.setManaged(true);
+            clientList.setVisible(true);
+            clientList.setManaged(true);
         }
     }
 
@@ -80,6 +92,8 @@ public class Controller {
 
     public void connect() {
 
+        myMsg = false;
+
         try {
             socket = new Socket(IP_ADRESS, PORT);
             in = new DataInputStream(socket.getInputStream());
@@ -95,16 +109,43 @@ public class Controller {
                                 setAuthorized(true);
                                 break;
                             } else {
-                                textArea.appendText(str + "\n");
+                                createMsg(str + "\n");
                             }
                         }
 
                         while (true) {
                             String str = in.readUTF();
-                            if (str.equals("/serverclosed")){
-                                break;
+                            if (str.startsWith("/")){
+                                if (str.equals("/serverclosed")){
+                                    break;
+                                }
+
+                                /**
+                                 * Реализация ориентации сообщений
+                                 */
+
+                                if (str.equals("/mymsg")) {
+                                    myMsg = true;
+                                }
+                                if (str.startsWith("/clientlist ")) {
+                                    String[] tokens = str.split(" ");
+                                    Platform.runLater(new Runnable() {
+                                        @Override
+                                        public void run() {
+//                                            MiniStage miniStage = new MiniStage();
+//                                            miniStage.show();
+
+                                            clientList.getItems().clear();
+                                            for (int i = 1; i < tokens.length; i++) {
+                                                clientList.getItems().add(tokens[i]);
+                                            }
+                                        }
+                                    });
+                                }
+                            } else {
+                                myMsg = false;
+                                createMsg(str + "\n");
                             }
-                            textArea.appendText(str + "\n");
                         }
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -132,7 +173,32 @@ public class Controller {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
 
+    public boolean isMyMsg() {
+        return myMsg;
+    }
+
+    /**
+     * Реализация ориентации сообщений
+     */
+    public void createMsg(String msg) {
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                Label label = new Label(msg);
+                VBox vBoxChat = new VBox();
+
+                if (!isMyMsg()) {
+                    vBoxChat.setAlignment(Pos.TOP_LEFT);
+                } else {
+                    vBoxChat.setAlignment(Pos.TOP_RIGHT);
+                }
+
+                vBoxChat.getChildren().add(label);
+                vBoxArea.getChildren().add(vBoxChat);
+            }
+        });
     }
 
 }

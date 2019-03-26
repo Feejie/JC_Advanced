@@ -9,6 +9,7 @@
 <?scanebuilder-stylesheet /css/style.css?>
 
 <?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.ListView?>
 <VBox fx:id="vBox" fx:controller="Lesson_6.NetChat.client.Controller" xmlns:fx="http://javafx.com/fxml" alignment="center">
     <stylesheets><URL value="@css/Style.css"/></stylesheets>
 
@@ -18,10 +19,18 @@
         <Button text="Авторизоваться" onAction="#tryToAuth" />
     </HBox>
 
-    <TextArea fx:id="textArea" editable="false" VBox.vgrow="ALWAYS"/>
-
-    <HBox fx:id="bottomPanel" managed="false" visible="false">
-        <TextField fx:id="textField" onAction="#sendMsg" HBox.hgrow="ALWAYS" promptText="Введите сообщение.."/>
-        <Button fx:id="btn1" text="Send √" onAction="#sendMsg"/>
+    <HBox VBox.vgrow="ALWAYS">
+        <VBox HBox.hgrow="ALWAYS">
+            <VBox fx:id="vBoxArea" VBox.vgrow="ALWAYS"/>
+            <HBox fx:id="bottomPanel" managed="false" visible="false">
+                <TextField fx:id="textField" onAction="#sendMsg" HBox.hgrow="ALWAYS" promptText="Введите сообщение.."/>
+                <Button fx:id="btn1" text="Send √" onAction="#sendMsg"/>
+            </HBox>
+        </VBox>
+        <ListView fx:id="clientList" managed="false" visible="false"/>
     </HBox>
+
+
+
+
 </VBox>
